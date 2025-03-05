@@ -1,183 +1,468 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chá Rifa - Participe!</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quebra de Objeções - Marketing Digital para PMEs</title>
+  <!-- Importando Fuse.js via CDN com defer para carregar após o HTML -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.6.2/fuse.min.js" defer></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 500px;
+      max-width: 100%;
+    }
+    header, main, footer {
+      margin-bottom: 10px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 26px;
+      color: #333;
+    }
+    #chatbox {
+      margin-top: 20px;
+      height: 350px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+      background-color: #fafafa;
+      border-radius: 4px;
+    }
+    #chatbox p {
+      margin: 5px 0;
+      white-space: pre-line;
+      opacity: 0;
+      animation: fadeIn 0.5s forwards;
+    }
+	@keyframes fadeIn {
+	  from { opacity: 0; }
+	  to { opacity: 1; }
+	}
+    .user-message {
+      color: #2a6f97;
+      font-weight: bold;
+    }
+    .response-message {
+      color: #555;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    label {
+      font-weight: bold;
+    }
+    input[type="text"] {
+      width: calc(100% - 20px);
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px;
+      background-color: #2a6f97;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1f5b7c;
+    }
+    .btn-secondary {
+      background-color: #888;
+    }
+    .btn-secondary:hover {
+      background-color: #666;
+    }
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+	 .loader {
+		border: 4px solid rgba(255, 255, 255, 0.3);
+		border-top: 4px solid #3498db;
+		border-radius: 50%;
+		width: 30px;
+		height: 30px;
+		animation: spin 1s linear infinite;
+		margin-left: 10px;
+	}
+
+	  @keyframes spin {
+		0% { transform: rotate(0deg); }
+		100% { transform: rotate(360deg); }
+	}
+	@media (max-width: 768px) {
+  .container {
+    width: 90%;
+    padding: 10px;
+  }
+
+  input[type="text"] {
+    width: 100%;
+  }
+
+  button {
+    width: 100%;
+  }
+}
+  </style>
 </head>
 <body>
+  <main class="container">
     <header>
-        <h1>Chá Rifa Beneficente</h1>
-        <p>Participe e concorra a prêmios incríveis!</p>
+      <h1>Quebra de Objeções</h1>
     </header>
+	<div id="loader" class="loader" style="display: none;"></div>
+    <section id="chatbox" aria-live="polite" aria-label="Chat de Objeções"></section>
+    <form id="chat-form">
+      <label for="user-input">Digite sua dúvida sobre marketing digital:</label>
+      <input type="text" id="user-input" placeholder="Ex: como atrair clientes com anúncios" required>
+      <div style="display: flex; gap: 10px;">
+        <button type="submit">Enviar</button>
+        <button type="button" id="clear-chat" class="btn-secondary">Limpar Chat</button>
+      </div>
+    </form>
+  </main>
 
-    <section class="info">
-        <h2>Como Funciona?</h2>
-        <p>Compre sua rifa e concorra a prêmios. Toda a arrecadação será destinada para a caridade.</p>
-    </section>
+  <script defer>
+    // Conjunto de dados com perguntas e respostas
+    const faq = [
+      { question: "o que é marketing digital", answer: "Marketing digital engloba um conjunto de estratégias online para promover produtos e serviços, utilizando canais como sites, redes sociais, e-mail marketing e anúncios pagos para atrair e converter clientes." },
+      { question: "como o marketing digital pode ajudar minha empresa", answer: "Ele pode aumentar a visibilidade da sua marca, gerar leads qualificados e melhorar as vendas, permitindo a mensuração e otimização contínua das campanhas para alcançar resultados consistentes." },
+      { question: "quais os serviços que vocês oferecem", answer: "Oferecemos uma gama completa de serviços, como SEO, marketing de conteúdo, gestão de redes sociais, campanhas pagas, e-mail marketing, desenvolvimento de sites e consultoria estratégica personalizada." },
+      { question: "qual o retorno sobre investimento do marketing digital", answer: "O ROI varia conforme a estratégia, mas com monitoramento constante e ajustes baseados em dados, é possível obter resultados mensuráveis e um crescimento sustentável." },
+      { question: "não tenho dinheiro agora", answer: "Entendemos a limitação orçamentária. Podemos iniciar com ações de baixo custo e priorizar estratégias com alto custo-benefício, ajustando o investimento conforme os resultados." },
+      { question: "quanto tempo leva para ver resultados com marketing digital", answer: "Campanhas pagas podem gerar resultados em poucas semanas, enquanto estratégias orgânicas, como SEO e marketing de conteúdo, costumam levar de 3 a 6 meses para consolidar resultados." },
+      { question: "como posso confiar nos seus serviços", answer: "Temos diversos cases de sucesso e depoimentos de clientes que comprovam nossa eficácia. Oferecemos também uma análise gratuita para que você possa conhecer nosso potencial." },
+      { question: "meu negócio é local, como atrair clientes", answer: "Utilizamos estratégias de SEO local e campanhas segmentadas por geolocalização para aumentar sua visibilidade na região e atrair clientes da área." },
+      { question: "por que investir em marketing digital se estou indo bem", answer: "Mesmo com resultados positivos, o marketing digital amplia seu alcance, fideliza clientes e abre novas oportunidades de crescimento para o seu negócio." },
+      { question: "como sua agência se diferencia das demais", answer: "Nosso diferencial é a personalização das estratégias e a transparência em todo o processo. Adaptamos as soluções às necessidades específicas do seu negócio e fornecemos relatórios claros dos resultados." },
+      { question: "como posso atrair clientes de forma rápida usando anúncios online", answer: "O tráfego pago permite alcançar seu público-alvo rapidamente, utilizando campanhas segmentadas em plataformas como Google Ads e Facebook Ads. Com uma gestão eficiente, é possível aumentar o tráfego, gerar leads qualificados e melhorar as conversões." },
+      { question: "como estruturar um funil de vendas completo desde a geração de leads até o remarketing", answer: "Um funil de ponta a ponta abrange a captação, nutrição e reengajamento de leads. Essa abordagem garante que, mesmo que o potencial cliente não converta na primeira interação, ele seja reimpactado por campanhas de remarketing, aumentando as chances de conversão." },
+      { question: "como vocês podem ajudar na criação de ofertas irresistíveis", answer: "Analisamos o mercado e o comportamento do consumidor para desenvolver ofertas alinhadas às necessidades do seu público, aumentando a percepção de valor e impulsionando as vendas." },
+      { question: "vocês oferecem suporte na construção e desenvolvimento de novos produtos", answer: "Sim, auxiliamos na identificação de oportunidades e na criação de produtos que atendam às demandas do mercado. Nosso suporte abrange desde a concepção até a estratégia de lançamento, garantindo competitividade e relevância." },
+      { question: "como o marketing digital pode contribuir para melhorias na logística do meu negócio", answer: "Embora a logística seja uma área operacional, estratégias digitais podem identificar gargalos e otimizar processos. A integração de dados e a melhoria na comunicação entre setores contribuem para operações mais ágeis e eficientes." },
+      { question: "como vocês podem ajudar na gestão e treinamento do meu time de vendas", answer: "Oferecemos treinamentos focados em técnicas de vendas e acompanhamento de indicadores, além de suporte contínuo para aprimorar a performance do seu time, garantindo maior eficácia nas negociações e conversões." },
+      { question: "como posso melhorar a estrutura do meu ponto de venda", answer: "Apoiamos na integração entre estratégias online e offline, otimizando a comunicação visual e a experiência no PDV. Isso melhora a fidelização do cliente e impulsiona as vendas." },
+      { question: "como o marketing digital pode ajudar a melhorar meu fluxo de caixa", answer: "Ao otimizar campanhas e melhorar as conversões, o marketing digital aumenta a receita e contribui para um fluxo de caixa mais consistente. Além disso, ações estratégicas podem reduzir custos e maximizar o retorno sobre o investimento." },
+	  { question: "qual o valor do serviço de marketing digital?", answer: "O valor do serviço depende das necessidades específicas do seu negócio e dos serviços que você deseja contratar. Oferecemos pacotes personalizados que podem incluir estratégias de tráfego pago, SEO, gestão de redes sociais, entre outros. Podemos agendar uma conversa para entender melhor suas necessidades e apresentar uma proposta adequada." },
+	  { question: "o marketing digital é caro?", answer: "O marketing digital pode ser visto como um investimento que, se bem aplicado, traz um retorno significativo. O custo depende dos objetivos e das estratégias escolhidas. Para empresas que estão começando ou têm orçamento mais restrito, oferecemos soluções escaláveis que permitem iniciar com um investimento menor e crescer conforme os resultados." },
+	  { question: "como posso medir o retorno sobre investimento (ROI) do marketing digital?", answer: "O ROI no marketing digital pode ser medido com base nas metas definidas, como aumento de vendas, geração de leads ou aumento no tráfego do site. Utilizamos ferramentas de monitoramento e análise de dados para avaliar e otimizar as campanhas, garantindo que o seu investimento gere os resultados desejados." },
+	  { question: "posso pagar apenas por resultados específicos?", answer: "Sim, podemos estruturar campanhas com foco em resultados específicos, como geração de leads ou vendas diretas. Trabalhamos com modelos de pagamento que se alinham com os seus objetivos, como custos por clique (CPC) ou por aquisição (CPA), para garantir que você pague apenas pelos resultados efetivos." },
+	  { question: "por que devo investir em marketing digital se estou vendo vendas?", answer: "Mesmo que você já esteja vendo vendas, o marketing digital pode aumentar ainda mais o seu alcance, melhorar o relacionamento com seus clientes e diversificar suas fontes de receita. Com estratégias personalizadas, conseguimos melhorar sua visibilidade e atingir novos públicos, potencializando os resultados." },
+	  { question: "quanto custa uma campanha de anúncios pagos (Google Ads, Facebook Ads, etc.)?", answer: "O custo de uma campanha de anúncios pagos depende da plataforma escolhida, do público-alvo e da competição no mercado. Podemos começar com investimentos menores e ajustar conforme os resultados obtidos. Além disso, a otimização das campanhas pode ajudar a maximizar o retorno e reduzir o custo por aquisição." },
+	  { question: "como o investimento em marketing digital vai gerar lucro para minha empresa?", answer: "O marketing digital permite segmentar com precisão o público-alvo, aumentando as chances de conversão. Com campanhas bem direcionadas e estratégias de SEO e marketing de conteúdo, conseguimos atrair visitantes qualificados para o seu site, o que resulta em maior número de vendas e lucro para o seu negócio." },
+	  { question: "é possível começar com um orçamento baixo no marketing digital?", answer: "Sim, é possível! Temos soluções de marketing digital que atendem a diferentes orçamentos. Podemos começar com campanhas de tráfego pago com baixo investimento, enquanto trabalhamos em estratégias de SEO e marketing de conteúdo para resultados de longo prazo." },
+	  { question: "qual o custo de uma consultoria estratégica em marketing digital?", answer: "O custo de uma consultoria estratégica depende da complexidade das necessidades do seu negócio. Oferecemos pacotes flexíveis, ajustados ao seu orçamento e objetivos, para que você tenha o máximo retorno sobre o seu investimento." },
+	  { question: "como definir o orçamento ideal para marketing digital?", answer: "O orçamento ideal para marketing digital é aquele que atende aos seus objetivos de negócio sem comprometer o fluxo de caixa. Podemos ajudar a definir esse valor com base nas metas da sua empresa, no tamanho do seu público-alvo e nas plataformas de marketing mais adequadas para o seu caso." },
+	   { question: "não tenho conhecimento em marketing digital, como posso confiar que isso vai funcionar?", answer: "Entendemos que o marketing digital pode parecer complexo. Nossa equipe estará ao seu lado durante todo o processo, explicando as ações e ajustando estratégias conforme necessário. Além disso, fornecemos relatórios claros e transparentes para que você possa acompanhar os resultados." },
+	  { question: "minha empresa é pequena, isso ainda é relevante para mim?", answer: "Sim, o marketing digital é fundamental para empresas de todos os tamanhos. Podemos criar estratégias personalizadas que atendem ao seu orçamento e ajudam sua empresa a alcançar mais clientes, mesmo com recursos limitados." },
+	  { question: "não tenho tempo para monitorar campanhas, como você vai gerenciar isso?", answer: "Nós cuidamos de tudo para você! Nosso trabalho inclui o gerenciamento contínuo de campanhas, análise de resultados e ajustes quando necessário, para que você possa se concentrar no que faz de melhor – administrar seu negócio." },
+	  { question: "o marketing digital vai dar resultados rapidamente?", answer: "Os resultados podem variar de acordo com a estratégia. Campanhas de tráfego pago geralmente trazem resultados mais rápidos, enquanto ações orgânicas como SEO e conteúdo demandam mais tempo, mas são eficazes a longo prazo. Podemos ajustar a estratégia para atender às suas expectativas." },
+	  { question: "eu não vejo necessidade de investir em marketing digital, já tenho clientes fiéis", answer: "Ter clientes fiéis é ótimo, mas o marketing digital pode ampliar ainda mais seu alcance e atrair novos clientes. Além disso, fortalece o relacionamento com seus atuais clientes e ajuda a diversificar sua base de consumidores." },
+	  { question: "não tenho equipe interna para lidar com marketing, como isso pode ser um problema?", answer: "Não se preocupe! Nós assumimos a responsabilidade pelas campanhas, desde a criação de conteúdo até a análise de desempenho. Caso precise, também oferecemos treinamentos para a sua equipe interna, caso queira desenvolver competências em marketing digital." },
+	  { question: "meu produto/serviço é muito específico, isso pode ser um desafio para o marketing digital?", answer: "De forma alguma! O marketing digital permite segmentação precisa. Podemos direcionar campanhas para públicos altamente específicos, utilizando dados e estratégias de nicho para garantir que você atinja as pessoas certas." },
+	  { question: "como posso garantir que minha marca vai ser vista no meio de tanta concorrência?", answer: "A chave para se destacar é ter uma proposta de valor clara e utilizar as melhores práticas de marketing digital, como SEO e segmentação eficaz. Também ajudamos na diferenciação da sua marca e na criação de campanhas que ressoem com o seu público-alvo." },
+	  { question: "eu não entendo de dados ou métricas, como vou saber se estou investindo bem?", answer: "Nós fornecemos relatórios claros e fáceis de entender, mostrando o desempenho das campanhas e o retorno do seu investimento. Além disso, fazemos reuniões regulares para explicar os resultados e ajustar as estratégias, sempre de acordo com seus objetivos." },
+	  { question: "não tenho muito orçamento, mas quero resultados, é possível?", answer: "Sim, é possível! Podemos começar com estratégias de baixo custo, como campanhas de tráfego pago com orçamentos reduzidos e ações de SEO, para gerar resultados gradualmente e otimizar conforme os resultados. O importante é investir de forma inteligente." },
+	  { question: "como o marketing digital pode ajudar em um cenário de crise econômica?", answer: "O marketing digital permite flexibilidade e adaptação rápida. Podemos ajustar suas campanhas para se concentrar em canais mais eficientes e de baixo custo, ajudando a gerar leads qualificados e aumentar as vendas, mesmo com um orçamento mais restrito." },
+	  { question: "quais resultados posso esperar se começar com marketing digital agora?", answer: "Os resultados variam conforme a estratégia, mas esperamos aumentar a visibilidade da sua marca, atrair leads qualificados e, em última análise, aumentar as vendas. Com campanhas de tráfego pago, resultados mais rápidos podem ser alcançados, enquanto estratégias orgânicas levam mais tempo, mas são sustentáveis." },
+	  { question: "como o marketing digital pode me ajudar a lidar com a sazonalidade do meu negócio?", answer: "O marketing digital é altamente adaptável. Podemos criar campanhas de remarketing para atingir clientes anteriores ou estratégias sazonais para maximizar vendas em períodos de alta demanda, além de ajudar a manter o fluxo de vendas constante durante a baixa temporada." },
+	  { question: "eu já tenho presença nas redes sociais, por que continuar investindo?", answer: "Ter presença nas redes sociais é um bom começo, mas o marketing digital vai além disso. Podemos ajudar a otimizar suas campanhas, aumentar a geração de leads e engajamento, além de implementar estratégias de tráfego pago e SEO para expandir ainda mais seu alcance." },
+	  { question: "não sei se o meu público-alvo usa internet, como posso saber?", answer: "Hoje em dia, a maioria das pessoas usa a internet para buscar produtos e serviços. Podemos fazer uma análise do seu mercado e público-alvo para entender onde eles estão online e desenvolver uma estratégia personalizada para alcançá-los nos canais mais relevantes." },
+	   { question: "e se os resultados não forem como esperado?", answer: "Com uma abordagem baseada em dados, monitoramos continuamente o desempenho das campanhas. Caso algo não esteja funcionando, fazemos ajustes rápidos para otimizar os resultados. O nosso objetivo é alcançar e superar suas expectativas." },
+  { question: "não tenho certeza se meu negócio vai se beneficiar do marketing digital, como posso ter certeza?", answer: "Nós realizamos uma análise inicial do seu mercado e público-alvo para entender a melhor forma de aplicar as estratégias. Além disso, trabalhamos com testes e acompanhamento contínuo para garantir que o marketing digital seja eficaz para o seu negócio." },
+  { question: "já tentei marketing digital antes e não deu certo, por que agora seria diferente?", answer: "O marketing digital é um processo dinâmico e em constante evolução. Podemos analisar as estratégias anteriores para entender o que não funcionou e implementar novas abordagens personalizadas, otimizadas de acordo com o seu público e objetivos." },
+  { question: "não sei se posso confiar em uma agência, como garantir que você está comprometido com meu sucesso?", answer: "Nosso compromisso é com o sucesso do seu negócio. Trabalhamos de forma transparente, compartilhando relatórios e dados de performance para que você possa acompanhar os resultados. Temos também depoimentos de clientes e cases de sucesso que comprovam nossa eficácia." },
+  { question: "como sei se a agência vai entender o meu negócio e as minhas necessidades?", answer: "Antes de qualquer ação, realizamos um diagnóstico detalhado do seu negócio e objetivos. A partir disso, desenvolvemos estratégias personalizadas. Trabalhamos em estreita colaboração com você, ajustando o planejamento sempre que necessário." },
+  { question: "e se eu não estiver disponível para acompanhar o progresso, como saber se a campanha está funcionando?", answer: "Nós cuidamos de todo o gerenciamento das campanhas e oferecemos relatórios regulares sobre o desempenho. Caso haja alguma dúvida, agendamos encontros para discutir os resultados e ajustarmos a estratégia quando necessário." },
+  { question: "como sei que o marketing digital vai trazer o retorno esperado?", answer: "Através de uma análise de dados constante, conseguimos prever e otimizar os resultados. Estabelecemos KPIs claros desde o início para que você possa acompanhar o retorno sobre o investimento. Nosso foco é gerar resultados mensuráveis e que justifiquem o valor investido." },
+  { question: "não entendo o que acontece nos bastidores, como posso confiar no trabalho da agência?", answer: "Trabalhamos de forma totalmente transparente. Além de fornecer relatórios detalhados, estamos sempre disponíveis para explicar o que estamos fazendo e como isso vai gerar resultados para o seu negócio. Acreditamos que a confiança é construída com base em comunicação clara e aberta." },
+  { question: "e se o marketing digital não for eficaz no meu nicho de mercado?", answer: "O marketing digital é altamente adaptável. Podemos estudar seu nicho e criar estratégias específicas que atendam às necessidades do seu público. A personalização e a segmentação precisa garantem que qualquer nicho possa ser explorado com sucesso." },
+  { question: "não sei se o marketing digital vai se encaixar com a minha cultura empresarial, como você vai adaptar?", answer: "Entendemos a importância da cultura empresarial e sempre trabalhamos para que as estratégias de marketing estejam alinhadas com os valores e objetivos da sua empresa. A comunicação é feita de forma personalizada, respeitando a identidade do seu negócio." },
+  { question: "o marketing digital não é só uma moda, vai funcionar a longo prazo?", answer: "O marketing digital não é uma moda passageira. As estratégias digitais estão cada vez mais presentes no mercado e são uma forma eficaz de aumentar o alcance, gerar leads e manter um relacionamento duradouro com seus clientes. Com as estratégias certas, o marketing digital pode trazer resultados a longo prazo." },
+  { question: "como sei se o investimento no marketing digital vale a pena?", answer: "O marketing digital traz resultados mensuráveis e ajustáveis. Utilizamos ferramentas de análise e acompanhamento que mostram o impacto das campanhas diretamente no seu negócio. Ao definir metas claras de ROI, podemos garantir que o investimento traga os resultados esperados." },
+  { question: "e se as campanhas não gerarem o impacto que você prometeu?", answer: "Trabalhamos com uma abordagem contínua de otimização. Se as campanhas não estiverem gerando os resultados desejados, ajustamos imediatamente as estratégias. Nosso compromisso é garantir que sua empresa tenha sucesso, e estamos prontos para modificar o plano até atingir os melhores resultados." },
+  { question: "eu não sei o suficiente sobre o marketing digital para tomar essa decisão, como posso confiar no processo?", answer: "Acreditamos na educação contínua e na transparência. Durante todo o processo, estaremos disponíveis para explicar as ações que estamos tomando e os resultados que esperamos alcançar. Oferecemos um acompanhamento constante para garantir que você se sinta confortável e informado a todo momento." },
+  { question: "não sei se posso justificar o valor do marketing digital para a minha diretoria, como posso fazer isso?", answer: "Podemos ajudá-lo a construir um case sólido, com dados e resultados tangíveis. Vamos demonstrar o impacto que o marketing digital pode ter em métricas como aumento de leads, vendas e engajamento, fornecendo provas concretas de que o investimento é justificável e trará resultados." },
+    { 
+    question: "Tenho receio de investir em marketing digital e não obter resultados, o que posso esperar?", 
+    answer: "Entendemos a sua preocupação. Trabalhamos com dados e análises constantes para garantir que a campanha seja otimizada conforme os resultados. Cada ação é mensurada e ajustada para que você tenha uma visibilidade clara do retorno sobre investimento (ROI)."
+  },
+  { 
+    question: "E se eu não souber como acompanhar o progresso das campanhas? Vou ficar perdido?", 
+    answer: "Não se preocupe! Nós fornecemos relatórios claros e fáceis de entender, além de estarmos disponíveis para explicar o que está acontecendo e como as campanhas estão se saindo. Trabalhamos lado a lado para que você se sinta seguro com o processo."
+  },
+  { 
+    question: "Meu orçamento é limitado, como posso ter certeza de que o investimento vai valer a pena?", 
+    answer: "Com um orçamento limitado, conseguimos trabalhar com estratégias de baixo custo e alta performance, priorizando as ações que trarão os melhores resultados. Além disso, monitoramos o desempenho constantemente e ajustamos as campanhas para garantir que o investimento esteja sendo bem aproveitado."
+  },
+  { 
+    question: "Não entendo nada de marketing digital, como vou saber se está funcionando?", 
+    answer: "Nosso papel é guiar você. Explicamos todas as ações e mostramos de forma transparente o impacto delas no seu negócio. Você vai entender claramente como o marketing digital está contribuindo para o crescimento da sua empresa."
+  },
+  { 
+    question: "Tenho medo de que o marketing digital não se encaixe no meu tipo de negócio, como você pode ter certeza de que vai funcionar para mim?", 
+    answer: "Cada negócio é único. Antes de qualquer ação, realizamos uma análise detalhada do seu mercado e público-alvo para desenvolver uma estratégia personalizada. O marketing digital é adaptável e pode ser ajustado conforme a necessidade do seu negócio."
+  },
+  { 
+    question: "Já tentei marketing digital antes e não deu certo, o que será diferente dessa vez?", 
+    answer: "Cada falha no marketing digital é uma oportunidade de aprender. Vamos revisar o que não funcionou no passado e melhorar as abordagens. Trabalhamos com uma estratégia de otimização contínua, então ajustamos tudo para gerar os melhores resultados para o seu negócio."
+  },
+  { 
+    question: "E se as campanhas não gerarem o retorno esperado?", 
+    answer: "Nós monitoramos todos os dados e ajustamos as campanhas conforme necessário. Se algo não estiver gerando os resultados esperados, alteramos a abordagem rapidamente. O objetivo é garantir que o retorno seja sempre positivo."
+  },
+  { 
+    question: "Como posso confiar que a agência vai entender o meu negócio e o que realmente preciso?", 
+    answer: "Nossa prioridade é entender as necessidades do seu negócio. Trabalhamos com uma abordagem consultiva, realizando um diagnóstico detalhado e mantendo uma comunicação aberta. Assim, conseguimos criar estratégias totalmente alinhadas aos seus objetivos."
+  },
+  { 
+    question: "Tenho medo de que minha empresa perca a identidade ao fazer marketing digital, como isso pode ser evitado?", 
+    answer: "A identidade da sua empresa é fundamental para nós. Todas as estratégias de marketing digital que criamos respeitam a essência do seu negócio, garantindo que sua marca seja promovida de forma autêntica e coerente."
+  },
+  { 
+    question: "E se o mercado não responder às minhas campanhas, o que acontece?", 
+    answer: "O marketing digital envolve testes e ajustes. Se o mercado não responder como esperado, ajustamos as campanhas para atingir de forma mais eficaz seu público-alvo. Nosso objetivo é sempre otimizar os esforços para garantir o sucesso."
+  },
+  { 
+    question: "Eu não sei nada sobre campanhas de tráfego pago, pode ser um risco para o meu orçamento?", 
+    answer: "Nós gerenciamos as campanhas de forma estratégica, com controle total sobre o orçamento. Começamos com testes para encontrar a melhor abordagem e, à medida que vemos os resultados, ajustamos a alocação do investimento para maximizar o retorno."
+  },
+  { 
+    question: "Tenho medo de que os resultados não venham a tempo, o que faço para mitigar esse risco?", 
+    answer: "A comunicação constante é a chave. Estaremos sempre atualizando você sobre o progresso e explicando os prazos realistas. Embora o marketing digital tenha suas variáveis, sempre buscamos entregar resultados dentro do que foi planejado e com expectativas claras."
+  },
+  { 
+    question: "Tenho receio de contratar uma agência que não cumpra o prometido, como posso ter certeza da sua seriedade?", 
+    answer: "Temos uma abordagem transparente e responsável. Fornecemos relatórios detalhados sobre o desempenho das campanhas e estamos sempre à disposição para conversar e alinhar expectativas. Nossa reputação é construída em resultados e em um serviço honesto."
+  },
+  { 
+    question: "E se a minha concorrência já está fazendo marketing digital, o que posso fazer para me destacar?", 
+    answer: "O marketing digital oferece muitas oportunidades para se destacar. Acompanhamos de perto as estratégias de seus concorrentes e ajustamos suas campanhas para garantir que você seja visto de maneira mais eficaz, com ofertas e abordagens únicas."
+  },
+  { 
+    question: "Estou inseguro sobre o tempo que devo investir para gerenciar campanhas, como isso pode ser otimizado?", 
+    answer: "Nós cuidamos de todo o gerenciamento das campanhas, poupando seu tempo e garantindo que você não precise se preocupar com os detalhes. Nosso objetivo é que você possa focar no seu negócio enquanto cuidamos da parte digital."
+  },
+  { 
+    question: "Eu não entendo de métricas e indicadores, como posso saber se o marketing digital está realmente funcionando para o meu negócio?", 
+    answer: "Nós explicamos tudo em termos simples e acessíveis, destacando as métricas mais importantes para o seu tipo de negócio. Relatórios claros são enviados regularmente para que você acompanhe o progresso, e estamos sempre disponíveis para explicar qualquer dúvida."
+  },  
+  { 
+    question: "Como posso confiar que o marketing digital vai realmente ajudar o meu negócio?", 
+    answer: "Trabalhamos com uma abordagem baseada em dados e resultados. A cada ação, monitoramos de perto os resultados, ajustamos as estratégias conforme necessário e fornecemos relatórios transparentes para que você possa ver como estamos impactando positivamente seu negócio."
+  },
+  { 
+    question: "E se eu não obtiver o retorno que espero do marketing digital?", 
+    answer: "Nós trabalhamos com otimizações constantes e análises de resultados. Se uma abordagem não estiver trazendo os resultados desejados, vamos ajustá-la de forma rápida e eficaz. A nossa prioridade é garantir que você tenha retorno sobre o investimento."
+  },
+  { 
+    question: "Como posso ter certeza de que você vai trabalhar nas necessidades específicas do meu negócio?", 
+    answer: "Antes de qualquer ação, realizamos uma análise aprofundada do seu mercado, seu público-alvo e seus objetivos. A partir disso, criamos um plano personalizado, alinhado com as suas necessidades e com foco no crescimento do seu negócio."
+  },
+  { 
+    question: "Vocês garantem que vou ver resultados reais e mensuráveis?", 
+    answer: "Embora os resultados possam variar dependendo de vários fatores, garantimos que todas as ações sejam mensuráveis, com relatórios claros sobre o impacto das campanhas. Trabalhamos para maximizar os resultados, sempre baseados em dados reais."
+  },
+  { 
+    question: "E se os resultados não forem tão bons quanto o esperado, posso contar com vocês para melhorar?", 
+    answer: "Sim! Estamos sempre disponíveis para revisar e ajustar as campanhas. Se não estivermos alcançando os resultados desejados, ajustamos nossa abordagem e continuamos a otimizar as campanhas até atingirmos as metas estabelecidas."
+  },
+  { 
+    question: "Como posso ter certeza de que estou fazendo a escolha certa ao contratar os seus serviços?", 
+    answer: "Temos um portfólio de clientes satisfeitos, com cases de sucesso e depoimentos. Além disso, realizamos uma análise inicial sem compromisso para mostrar o potencial do marketing digital para o seu negócio. A nossa missão é gerar confiança e resultados para o seu negócio."
+  },
+  { 
+    question: "Por que devo confiar que vocês são especializados no meu segmento de mercado?", 
+    answer: "Temos experiência em diversos setores e tratamos cada cliente de forma única. Antes de iniciar qualquer trabalho, fazemos uma imersão no seu mercado para entender suas especificidades e oferecer soluções personalizadas e eficazes."
+  },
+  { 
+    question: "Como posso saber se o que você promete é realmente cumprido?", 
+    answer: "Nosso compromisso é com a transparência. Oferecemos relatórios regulares, acompanhamento contínuo e garantimos uma comunicação aberta durante todo o processo. A cada etapa, você verá como estamos cumprindo com os objetivos estabelecidos."
+  },
+  { 
+    question: "O que diferencia sua empresa das outras agências de marketing digital?", 
+    answer: "Nosso foco está na parceria de longo prazo e no desenvolvimento de soluções personalizadas, sempre com base em dados. Não somos apenas uma agência de marketing, mas um verdadeiro parceiro do seu negócio, comprometido com a transparência e resultados reais."
+  },
+  { 
+    question: "Como posso confiar em uma empresa que não conheço ainda?", 
+    answer: "Entendemos que a confiança é fundamental. Por isso, além dos depoimentos de nossos clientes, podemos oferecer uma consulta gratuita e sem compromisso para discutir suas necessidades e como podemos ajudar. Acreditamos que a confiança se constrói com base em ações concretas e resultados."
+  },
+  { 
+    question: "E se eu não gostar dos resultados após o início das campanhas, posso cancelar o contrato?", 
+    answer: "Nosso compromisso é com sua satisfação e sucesso. Se, após um período de análise e ajustes, os resultados não atenderem às suas expectativas, trabalhamos com flexibilidade e transparência para discutir alternativas ou até mesmo finalizar o contrato, conforme sua necessidade."
+  },
+  { 
+    question: "Como posso saber se estou sendo tratado com honestidade e que não estão me oferecendo algo desnecessário?", 
+    answer: "Nossa abordagem é sempre transparente e focada nas necessidades reais do seu negócio. Antes de qualquer ação, discutimos detalhadamente suas expectativas e explicamos como cada serviço se alinha aos seus objetivos. Não há 'vendas forçadas' ou soluções desnecessárias em nosso trabalho."
+  },
+  { 
+    question: "Meu negócio é pequeno, como posso ter certeza de que meu orçamento será bem aproveitado?", 
+    answer: "Nossos serviços são escaláveis e podemos ajustar as campanhas de acordo com o seu orçamento. Trabalhamos com foco no retorno sobre investimento (ROI) e garantimos que cada real investido traga resultados concretos e mensuráveis, independentemente do tamanho do seu negócio."
+  },
+    { 
+    question: "Eu não sei se posso confiar no marketing digital para o meu negócio. Como posso ter certeza?", 
+    answer: "Entendemos que a confiança é essencial. Trabalhamos com uma abordagem transparente e baseada em dados. A cada campanha, fornecemos relatórios detalhados, mostrando como cada ação está impactando seu negócio. Você sempre terá visibilidade sobre o que estamos fazendo e os resultados que estamos alcançando."
+  },
+  { 
+    question: "Como posso ter segurança de que o marketing digital vai trazer resultados para o meu negócio?", 
+    answer: "Nós não prometemos resultados milagrosos, mas trabalhamos para garantir que cada ação tenha um retorno sobre investimento (ROI) mensurável. Nosso trabalho é baseado em testes constantes, ajustes contínuos e análises de dados para garantir que suas campanhas gerem resultados reais e consistentes."
+  },
+  { 
+    question: "E se eu investir em marketing digital e não ver retorno? Como posso ter certeza de que vale a pena?", 
+    answer: "Primeiramente, nossos contratos incluem acompanhamento contínuo. Se uma campanha não estiver trazendo resultados, faremos ajustes imediatos para melhorar o desempenho. O marketing digital é um processo de otimização constante, e nossa missão é garantir que você veja o retorno esperado."
+  },
+  { 
+    question: "Eu nunca trabalhei com marketing digital antes. Como posso saber se vocês realmente sabem o que estão fazendo?", 
+    answer: "Nossa experiência em diversos setores nos permite entender as necessidades específicas do seu negócio. Temos uma abordagem consultiva, ouvindo suas necessidades e criando estratégias personalizadas para garantir o sucesso. Além disso, temos um portfólio com cases de sucesso que demonstram nossa expertise."
+  },
+  { 
+    question: "Estou inseguro quanto a contratar uma agência. Como posso saber que vocês não vão me enganar?", 
+    answer: "Nosso compromisso é com a transparência. Não vendemos promessas, mas ações. Oferecemos uma análise inicial gratuita para entender suas necessidades e apresentar um plano de ação realista. Você verá, desde o início, como vamos trabalhar para atingir seus objetivos."
+  },
+  { 
+    question: "Tenho medo de não conseguir acompanhar os resultados das campanhas. Como posso confiar que estou no caminho certo?", 
+    answer: "Compreendemos que isso pode ser uma preocupação. Fornecemos relatórios regulares, fáceis de entender, com explicações claras sobre os resultados. Você terá acesso total às métricas, e sempre estaremos à disposição para tirar dúvidas e discutir as estratégias."
+  },
+  { 
+    question: "Eu já investi em marketing digital antes e não vi resultados. Como posso ter certeza que dessa vez será diferente?", 
+    answer: "Cada negócio é único, e pode ser que a estratégia anterior não tenha sido bem ajustada. Faremos uma análise detalhada do que foi feito antes, identificaremos o que pode ser melhorado e aplicaremos uma nova estratégia focada em resultados reais. O marketing digital é um processo dinâmico e adaptável, e nossa equipe está pronta para fazer ajustes rápidos conforme necessário."
+  },
+  { 
+    question: "E se eu não estiver satisfeito com o serviço? Posso confiar que vocês irão solucionar o problema?", 
+    answer: "Nosso compromisso é com a satisfação do cliente. Se você não estiver satisfeito com os resultados ou com o serviço, trabalharemos com você para entender o que pode ser melhorado. Se necessário, faremos ajustes ou discutiremos alternativas. Estamos sempre dispostos a ouvir e garantir que você tenha uma experiência positiva."
+  },
+  { 
+    question: "Tenho receio de que o marketing digital não se encaixe nas minhas necessidades. Como posso ter certeza de que será útil para meu negócio?", 
+    answer: "Acreditamos que a melhor forma de eliminar esse receio é por meio de uma análise aprofundada do seu negócio. Antes de qualquer ação, conversaremos com você para entender suas metas, seu público-alvo e seu mercado. Com base nisso, criaremos uma estratégia personalizada que realmente atenda às suas necessidades."
+  },
+  { 
+    question: "Eu tenho medo de que o marketing digital não seja eficiente para o meu tipo de negócio. Como posso saber que ele vai funcionar para mim?", 
+    answer: "O marketing digital é altamente adaptável e pode ser eficaz em diversos tipos de negócios. Para garantir que ele seja eficaz para o seu, faremos uma análise específica do seu mercado e do comportamento do seu público. Vamos desenvolver uma estratégia personalizada que maximize o impacto para o seu tipo de negócio."
+  },
+  { 
+    question: "Estou inseguro quanto à contratação de uma agência. Como posso ter certeza de que vocês são a escolha certa?", 
+    answer: "A nossa abordagem é centrada no cliente, com foco em resultados e em um relacionamento de longo prazo. Além de nossa experiência e expertise, oferecemos uma análise inicial gratuita para que você possa ver como podemos ajudar. Queremos garantir que você se sinta seguro e confiante em nossa parceria."
+  },
+    ];
 
-    <section class="prizes">
-        <h2>Prêmios</h2>
-        <ul>
-            <li>1º Prêmio: Smartphone</li>
-            <li>2º Prêmio: Cesta de Natal</li>
-            <li>3º Prêmio: Vale-compras</li>
-        </ul>
-    </section>
+     document.addEventListener('DOMContentLoaded', function() {
+    // Configurações do Fuse.js
+	const options = {
+	  keys: ['question'], // A chave de busca é a "question"
+	  threshold: 0.32,     // Aumenta a tolerância de correspondência (0.5 para um meio-termo entre precisão e flexibilidade)
+	  includeScore: true, // Inclui a pontuação para saber o quão relevante é a correspondência
+	  ignoreLocation: true, // Ignora a localização do termo
+	};
 
-    <section class="participation">
-        <h2>Como Participar?</h2>
-        <p>1. Compre sua rifa por R$10,00.</p>
-        <p>2. Preencha o formulário abaixo para garantir sua participação!</p>
 
-        <form action="#">
-            <label for="name">Nome:</label>
-            <input type="text" id="name" name="name" required>
-            
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
-            
-            <label for="quantity">Quantidade de Rifas:</label>
-            <input type="number" id="quantity" name="quantity" min="1" required>
-            
-            <button type="submit">Participar</button>
-        </form>
-    </section>
+    // Inicializa o Fuse com os dados
+    const fuse = new Fuse(faq, options);
 
-    <section class="table-section">
-        <h2>Tabela de Números</h2>
-        <div class="table-container">
-            <table>
-                <tbody>
-                    <!-- Gerar as linhas da tabela dinamicamente -->
-                    <tr>
-                        <td class="color1">1</td>
-                        <td class="color2">2</td>
-                        <td class="color1">3</td>
-                        <td class="color2">4</td>
-                        <td class="color1">5</td>
-                        <td class="color2">6</td>
-                        <td class="color1">7</td>
-                        <td class="color2">8</td>
-                        <td class="color1">9</td>
-                        <td class="color2">10</td>
-                    </tr>
-                    <tr>
-                        <td class="color1">11</td>
-                        <td class="color2">12</td>
-                        <td class="color1">13</td>
-                        <td class="color2">14</td>
-                        <td class="color1">15</td>
-                        <td class="color2">16</td>
-                        <td class="color1">17</td>
-                        <td class="color2">18</td>
-                        <td class="color1">19</td>
-                        <td class="color2">20</td>
-                    </tr>
-                    <tr>
-                        <td class="color1">21</td>
-                        <td class="color2">22</td>
-                        <td class="color1">23</td>
-                        <td class="color2">24</td>
-                        <td class="color1">25</td>
-                        <td class="color2">26</td>
-                        <td class="color1">27</td>
-                        <td class="color2">28</td>
-                        <td class="color1">29</td>
-                        <td class="color2">30</td>
-                    </tr>
-                    <tr>
-                        <td class="color1">31</td>
-                        <td class="color2">32</td>
-                        <td class="color1">33</td>
-                        <td class="color2">34</td>
-                        <td class="color1">35</td>
-                        <td class="color2">36</td>
-                        <td class="color1">37</td>
-                        <td class="color2">38</td>
-                        <td class="color1">39</td>
-                        <td class="color2">40</td>
-                    </tr>
-                    <tr>
-                        <td class="color1">41</td>
-                        <td class="color2">42</td>
-                        <td class="color1">43</td>
-                        <td class="color2">44</td>
-                        <td class="color1">45</td>
-                        <td class="color2">46</td>
-                        <td class="color1">47</td>
-                        <td class="color2">48</td>
-                        <td class="color1">49</td>
-                        <td class="color2">50</td>
-                    </tr>
-                    <tr>
-                        <td class="color1">51</td>
-                        <td class="color2">52</td>
-                        <td class="color1">53</td>
-                        <td class="color2">54</td>
-                        <td class="color1">55</td>
-                        <td class="color2">56</td>
-                        <td class="color1">57</td>
-                        <td class="color2">58</td>
-                        <td class="color1">59</td>
-                        <td class="color2">60</td>
-                    </tr>
-                    <tr>
-                        <td class="color1">61</td>
-                        <td class="color2">62</td>
-                        <td class="color1">63</td>
-                        <td class="color2">64</td>
-                        <td class="color1">65</td>
-                        <td class="color2">66</td>
-                        <td class="color1">67</td>
-                        <td class="color2">68</td>
-                        <td class="color1">69</td>
-                        <td class="color2">70</td>
-                    </tr>
-                    <tr>
-                        <td class="color1">71</td>
-                        <td class="color2">72</td>
-                        <td class="color1">73</td>
-                        <td class="color2">74</td>
-                        <td class="color1">75</td>
-                        <td class="color2">76</td>
-                        <td class="color1">77</td>
-                        <td class="color2">78</td>
-                        <td class="color1">79</td>
-                        <td class="color2">80</td>
-                    </tr>
-                    <tr>
-                        <td class="color1">81</td>
-                        <td class="color2">82</td>
-                        <td class="color1">83</td>
-                        <td class="color2">84</td>
-                        <td class="color1">85</td>
-                        <td class="color2">86</td>
-                        <td class="color1">87</td>
-                        <td class="color2">88</td>
-                        <td class="color1">89</td>
-                        <td class="color2">90</td>
-                    </tr>
-                    <tr>
-                        <td class="color1">91</td>
-                        <td class="color2">92</td>
-                        <td class="color1">93</td>
-                        <td class="color2">94</td>
-                        <td class="color1">95</td>
-                        <td class="color2">96</td>
-                        <td class="color1">97</td>
-                        <td class="color2">98</td>
-                        <td class="color1">99</td>
-                        <td class="color2">100</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
+    // Função para normalizar strings: remove acentos e transforma em minúsculas
+	function normalizeText(text) {
+	  const synonyms = {
+		"valor": ["preço", "custo", "quanto custa"],
+		"confiar": ["segurança", "certeza", "garantia"],
+		// Adicione mais sinônimos conforme necessário
+	  };
 
-    <footer>
-        <p>&copy; 2025 Chá Rifa Beneficente. Todos os direitos reservados.</p>
-    </footer>
+	  for (let key in synonyms) {
+		synonyms[key].forEach(synonym => {
+		  text = text.replace(new RegExp(`\\b${synonym}\\b`, 'gi'), key);
+		});
+	  }
+
+	  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+	}
+
+
+    // Adiciona uma mensagem ao chatbox com animação
+    function addMessage(text, className) {
+      const chatbox = document.getElementById('chatbox');
+      const messageElement = document.createElement('p');
+      messageElement.textContent = text;
+      messageElement.classList.add(className);
+      chatbox.appendChild(messageElement);
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+	
+	const unrecognizedQuestions = [];
+    // Processa a resposta à pergunta do usuário
+    function getResponse(event) {
+      event.preventDefault(); // Previne o envio padrão do formulário
+      const userInputElement = document.getElementById('user-input');
+      const userInput = normalizeText(userInputElement.value.trim());
+      if (!userInput) return;
+
+      // Exibe a mensagem do usuário
+      addMessage(`Você: ${userInputElement.value}`, 'user-message');
+	  
+	  // Exibe o loader enquanto está buscando
+	  document.getElementById('loader').style.display = 'inline-block';
+
+	  // Busca aproximada usando Fuse.js
+	  setTimeout(() => { // Simula o tempo de processamento
+		const result = fuse.search(userInput);
+		if (result.length > 0) {
+		  const bestMatch = result[0].item;
+		  addMessage(`Resposta: ${bestMatch.answer}`, 'response-message');
+		} else {
+		 unrecognizedQuestions.push(userInput); // Registra a pergunta não entendida
+		  addMessage("Resposta: Desculpe, não entendi. Por favor, reformule a pergunta ou tente outro tópico.", 'response-message');
+		}
+		
+	
+		// Esconde o loader depois de processar
+		document.getElementById('loader').style.display = 'none';	
+		// Limpa o campo de input
+		userInputElement.value = "";
+	  }, 500); // Simula um pequeno atraso de processamento
+	}
+	document.addEventListener("contextmenu", function(event){
+		event.preventDefault();
+	});
+	document.addEventListener("keydown", function(event) {
+		if (event.key === "F12" || (event.ctrlKey && event.shiftKey && event.key === "I")) {
+			event.preventDefault();
+		}
+	});
+	document.getElementById('user-input').addEventListener('keydown', function(event) {
+	  if (event.key === 'Enter') {
+		event.preventDefault();
+		getResponse(event);
+	  }
+	});
+    // Limpa o chat
+    function clearChat() {
+      document.getElementById('chatbox').innerHTML = "";
+    }
+
+    // Event listeners para o formulário e botão de limpar chat
+    document.getElementById('chat-form').addEventListener('submit', getResponse);
+    document.getElementById('clear-chat').addEventListener('click', clearChat);
+	
+  });
+  </script>
 </body>
 </html>
+	
